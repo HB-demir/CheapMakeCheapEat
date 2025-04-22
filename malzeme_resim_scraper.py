@@ -19,7 +19,7 @@ def slugify(turkish_text):
     turkish_text = turkish_text.replace(" ", "-")
     return turkish_text.strip("-")
 
-def get_real_ingredients_from_site(meal_name):
+def get_recipe_data(meal_name):
     slug = slugify(meal_name)
     url = f"https://www.nefisyemektarifleri.com/{slug}/"
     print(f"🔗 URL: {url}")
@@ -32,14 +32,13 @@ def get_real_ingredients_from_site(meal_name):
         driver.get(url)
         time.sleep(3)
 
-        # Malzeme kısmı birden fazla şekilde olabilir
+        # Malzemeleri bul
         possible_selectors = [
             ".recipe-materials",
             ".recipe-materials-inner",
             ".recipe-material-content",
             ".recipe-content"
         ]
-
         element = None
         for selector in possible_selectors:
             try:
@@ -55,9 +54,17 @@ def get_real_ingredients_from_site(meal_name):
         full_text = element.get_attribute("innerText")
         ingredients = [line.strip() for line in full_text.split("\n") if line.strip()]
 
+        # Görseli bul (meta tag ile)
+        try:
+            image_element = driver.find_element("css selector", "meta[property='og:image']")
+            image_url = image_element.get_attribute("content")
+        except:
+            image_url = None
+
         return {
             "meal": meal_name,
             "url": url,
+            "image": image_url,
             "ingredients": ingredients
         }
 
@@ -66,13 +73,15 @@ def get_real_ingredients_from_site(meal_name):
     finally:
         driver.quit()
 
-# Test
-meal_input = input("Yemek adı girin: ")  # Örnek: anne köftesi
-result = get_real_ingredients_from_site(meal_input)
+# ✅ Bu kısım sadece test amaçlıdır. main.py dosyasından çağrıldığında çalışmaz!
+if __name__ == "__main__":
+    meal_input = input("Yemek adı girin: ")
+    result = get_recipe_data(meal_input)
 
-if "error" in result:
-    print("❌", result["error"])
-else:
-    print(f"\n✅ {result['meal']} Tarifi (Kaynak: {result['url']})")
-    for item in result['ingredients']:
-        print(" -", item)
+    if "error" in result:
+        print("❌", result["error"])
+    else:
+        print(f"\n✅ {result['meal']} Tarifi (Kaynak: {result['url']})")
+        print(f"🖼️ Görsel: {result['image']}")
+        for item in result['ingredients']:
+            print(" -", item)
