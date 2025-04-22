@@ -1,4 +1,3 @@
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -49,3 +48,5 @@ if __name__ == "__main__":
         print("❌", result["error"])
     else:
         print(f"✅ En ucuz '{user_input}' fiyatı: {result} TL")
+
+    
